@@ -26,10 +26,13 @@ func main() {
 		log.Fatalf("Unable to get username: %v", err)
 	}
 
-	pubsub.DeclareAndBind(conn, routing.ExchangePerilDirect,
-		fmt.Sprintf("%s.%s", routing.PauseKey, username), routing.PauseKey, pubsub.SimpleQueueTransient)
-
 	gameState := gamelogic.NewGameState(username)
+
+	err = pubsub.SubscribeJSON(conn, routing.ExchangePerilDirect, routing.PauseKey+"."+username,
+		routing.PauseKey, pubsub.SimpleQueueTransient, handlerPause(gameState))
+	if err != nil {
+		log.Fatalf("could not subscribe to pause: %v", err)
+	}
 
 clientLoop:
 	for {
