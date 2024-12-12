@@ -21,6 +21,11 @@ func main() {
 	defer conn.Close()
 	fmt.Println("RabbitMQ connection established")
 
+	ch, err := conn.Channel()
+	if err != nil {
+		log.Fatalf("Could not create channel: %v", err)
+	}
+
 	username, err := gamelogic.ClientWelcome()
 	if err != nil {
 		log.Fatalf("Unable to get username: %v", err)
@@ -32,6 +37,12 @@ func main() {
 		routing.PauseKey, pubsub.SimpleQueueTransient, handlerPause(gameState))
 	if err != nil {
 		log.Fatalf("could not subscribe to pause: %v", err)
+	}
+
+	err = pubsub.SubscribeJSON(conn, routing.ExchangePerilTopic, routing.ArmyMovesPrefix+"."+username,
+		routing.ArmyMovesPrefix+".*", pubsub.SimpleQueueTransient, handlerMove(gameState))
+	if err != nil {
+		log.Fatalf("could not subscribe to army_moves: %v", err)
 	}
 
 clientLoop:
@@ -56,7 +67,12 @@ clientLoop:
 					fmt.Printf("Move command failed: %v\n", err)
 					break
 				}
-				fmt.Printf("Move units to %s completed!\n", move.ToLocation)
+				err = pubsub.PublishJSON(ch, routing.ExchangePerilTopic, routing.ArmyMovesPrefix+"."+username, move)
+				if err != nil {
+					log.Printf("Could not publish: %v", err)
+					break
+				}
+				fmt.Println("Move published sucessfully")
 			}
 		case "status":
 			gameState.CommandStatus()
