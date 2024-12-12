@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/t-morgan/peril/internal/gamelogic"
 	"github.com/t-morgan/peril/internal/pubsub"
 	"github.com/t-morgan/peril/internal/routing"
 
@@ -16,7 +17,7 @@ func main() {
 	const mqConnection = "amqp://guest:guest@localhost:5672/"
 	conn, err := amqp.Dial(mqConnection)
 	if err != nil {
-		log.Fatalf("RabbitMQ connection failes: %v", err)
+		log.Fatalf("RabbitMQ connection failed: %v", err)
 	}
 	defer conn.Close()
 	fmt.Println("RabbitMQ connection established")
@@ -25,8 +26,36 @@ func main() {
 	if err != nil {
 		log.Fatalf("Could not create channel: %v", err)
 	}
-	err = pubsub.PublishJSON(ch, routing.ExchangePerilDirect, routing.PauseKey, routing.PlayingState{IsPaused: true})
-	if err != nil {
-		log.Printf("Could not publish: %v", err)
+
+	gamelogic.PrintServerHelp()
+
+serverLoop:
+	for {
+		words := gamelogic.GetInput()
+		if len(words) == 0 {
+			continue
+		}
+
+		switch words[0] {
+		case "pause":
+			{
+				err = pubsub.PublishJSON(ch, routing.ExchangePerilDirect, routing.PauseKey, routing.PlayingState{IsPaused: true})
+				if err != nil {
+					log.Printf("Could not publish: %v", err)
+				}
+			}
+		case "resume":
+			{
+				err = pubsub.PublishJSON(ch, routing.ExchangePerilDirect, routing.PauseKey, routing.PlayingState{IsPaused: false})
+				if err != nil {
+					log.Printf("Could not publish: %v", err)
+				}
+			}
+		case "quit":
+			fmt.Println("Exiting Server...")
+			break serverLoop
+		default:
+			fmt.Printf("Unknown command: %s", words[0])
+		}
 	}
 }
