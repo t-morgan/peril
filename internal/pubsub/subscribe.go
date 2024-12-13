@@ -25,13 +25,13 @@ func SubscribeJSON[T any](
 	simpleQueueType SimpleQueueType,
 	handler func(T) Acktype,
 ) error {
-	return subscribe(conn, exchange, queueName, key, simpleQueueType, handler, func(in []byte) (T, error) {
-		var out T
-		err := json.Unmarshal(in, &out)
+	return subscribe(conn, exchange, queueName, key, simpleQueueType, handler, func(data []byte) (T, error) {
+		var target T
+		err := json.Unmarshal(data, &target)
 		if err != nil {
-			return out, err
+			return target, err
 		}
-		return out, nil
+		return target, nil
 	})
 }
 
@@ -43,15 +43,15 @@ func SubscribeGob[T any](
 	simpleQueueType SimpleQueueType,
 	handler func(T) Acktype,
 ) error {
-	return subscribe(conn, exchange, queueName, key, simpleQueueType, handler, func(in []byte) (T, error) {
-		buffer := bytes.NewBuffer(in)
+	return subscribe(conn, exchange, queueName, key, simpleQueueType, handler, func(data []byte) (T, error) {
+		buffer := bytes.NewBuffer(data)
 		dec := gob.NewDecoder(buffer)
-		var out T
-		err := dec.Decode(&out)
+		var target T
+		err := dec.Decode(&target)
 		if err != nil {
-			return out, err
+			return target, err
 		}
-		return out, nil
+		return target, nil
 	})
 }
 
