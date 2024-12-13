@@ -70,6 +70,7 @@ func subscribe[T any](
 	}
 	fmt.Printf("Queue %v declared and bound!\n", queue.Name)
 
+	ch.Qos(10, 0, false)
 	messages, err := ch.Consume(queue.Name, "", false, false, false, false, nil)
 	if err != nil {
 		return fmt.Errorf("could not consume %s: %v", queueName, err)

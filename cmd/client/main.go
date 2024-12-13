@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"log"
+	"strconv"
+	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/t-morgan/peril/internal/gamelogic"
@@ -85,7 +87,25 @@ clientLoop:
 		case "help":
 			gamelogic.PrintClientHelp()
 		case "spam":
-			fmt.Println("Spamming not allowed yet")
+			{
+				if len(words) < 2 {
+					continue
+				}
+				n, err := strconv.Atoi(words[1])
+				if err != nil {
+					log.Printf("Could not parse int: %v\n", err)
+					break
+				}
+
+				for i := 0; i < n; i++ {
+					log := gamelogic.GetMaliciousLog()
+					pubsub.PublishGob(ch, gameState.GetUsername(), routing.GameLog{
+						CurrentTime: time.Now(),
+						Username:    gameState.GetUsername(),
+						Message:     log,
+					})
+				}
+			}
 		case "quit":
 			gamelogic.PrintQuit()
 			break clientLoop
