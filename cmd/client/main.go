@@ -46,7 +46,7 @@ func main() {
 	}
 
 	err = pubsub.SubscribeJSON(conn, routing.ExchangePerilTopic, routing.WarRecognitionsPrefix,
-		routing.WarRecognitionsPrefix+".*", pubsub.SimpleQueueDurable, handlerWar(gameState))
+		routing.WarRecognitionsPrefix+".*", pubsub.SimpleQueueDurable, handlerWar(gameState, ch))
 	if err != nil {
 		log.Fatalf("could not subscribe to war: %v", err)
 	}
@@ -75,7 +75,7 @@ clientLoop:
 				}
 				err = pubsub.PublishJSON(ch, routing.ExchangePerilTopic, routing.ArmyMovesPrefix+"."+username, move)
 				if err != nil {
-					log.Printf("Could not publish: %v", err)
+					log.Printf("Could not publish: %v\n", err)
 					break
 				}
 				fmt.Println("Move published sucessfully")

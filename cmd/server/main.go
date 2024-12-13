@@ -28,7 +28,7 @@ func main() {
 	}
 
 	_, queue, err := pubsub.DeclareAndBind(conn, routing.ExchangePerilTopic,
-		routing.GameLogSlug, fmt.Sprintf("%s.*", routing.GameLogSlug), pubsub.SimpleQueueDurable)
+		routing.GameLogSlug, routing.GameLogSlug+".*", pubsub.SimpleQueueDurable)
 	if err != nil {
 		log.Fatalf("could not subscribe to game_logs: %v", err)
 	}
@@ -48,14 +48,14 @@ serverLoop:
 			{
 				err = pubsub.PublishJSON(ch, routing.ExchangePerilDirect, routing.PauseKey, routing.PlayingState{IsPaused: true})
 				if err != nil {
-					log.Printf("Could not publish: %v", err)
+					log.Printf("Could not publish: %v\n", err)
 				}
 			}
 		case "resume":
 			{
 				err = pubsub.PublishJSON(ch, routing.ExchangePerilDirect, routing.PauseKey, routing.PlayingState{IsPaused: false})
 				if err != nil {
-					log.Printf("Could not publish: %v", err)
+					log.Printf("Could not publish: %v\n", err)
 				}
 			}
 		case "quit":
