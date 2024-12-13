@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/t-morgan/peril/internal/gamelogic"
 	"github.com/t-morgan/peril/internal/pubsub"
@@ -55,7 +56,11 @@ func handlerWar(gs *gamelogic.GameState, ch *amqp.Channel) func(gamelogic.Recogn
 		switch outcome {
 		case gamelogic.WarOutcomeOpponentWon, gamelogic.WarOutcomeYouWon:
 			{
-				err := pubsub.PublishGob(ch, gs.GetUsername(), fmt.Sprintf("%s won a war against %s", winner, loser))
+				err := pubsub.PublishGob(ch, gs.GetUsername(), routing.GameLog{
+					CurrentTime: time.Now(),
+					Username:    gs.GetUsername(),
+					Message:     fmt.Sprintf("%s won a war against %s", winner, loser),
+				})
 				if err != nil {
 					fmt.Printf("Error: %v\n", err)
 					return pubsub.NackRequeue
@@ -63,7 +68,11 @@ func handlerWar(gs *gamelogic.GameState, ch *amqp.Channel) func(gamelogic.Recogn
 			}
 		case gamelogic.WarOutcomeDraw:
 			{
-				err := pubsub.PublishGob(ch, gs.GetUsername(), fmt.Sprintf("A war between %s and %s resulted in a draw", winner, loser))
+				err := pubsub.PublishGob(ch, gs.GetUsername(), routing.GameLog{
+					CurrentTime: time.Now(),
+					Username:    gs.GetUsername(),
+					Message:     fmt.Sprintf("A war between %s and %s resulted in a draw", winner, loser),
+				})
 				if err != nil {
 					fmt.Printf("Error: %v\n", err)
 					return pubsub.NackRequeue
